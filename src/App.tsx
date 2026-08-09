@@ -4,6 +4,8 @@ import { InvoiceUploader } from './components/InvoiceUploader';
 import { BatchProcessor, BatchItem } from './components/BatchProcessor';
 import { BatchReviewQueue } from './components/BatchReviewQueue';
 import { ManageAccountsModal } from './components/ManageAccountsModal';
+import { AccountPasswordModal } from './components/AccountPasswordModal';
+import { SignInGate } from './components/SignInGate';
 import { InvoiceViewer } from './components/InvoiceViewer';
 import { ExtractionForm } from './components/ExtractionForm';
 import { DatabaseView } from './components/DatabaseView';
@@ -40,12 +42,27 @@ export default function App() {
 
   // User Accounts State
   const [accounts, setAccounts] = useState<UserAccount[]>([
-    { id: 'acc-1', name: 'Madam Lim', role: 'AP Clerk', initials: 'ML' },
-    { id: 'acc-2', name: 'Mr. Boon', role: 'Owner', initials: 'MB' }
+    { id: 'acc-1', name: 'Madam Lim', role: 'AP Clerk', initials: 'ML', password: '8888' },
+    { id: 'acc-2', name: 'Mr. Boon', role: 'Owner', initials: 'MB', password: '6767' }
   ]);
-  const [activeAccountId, setActiveAccountId] = useState<string>('acc-1');
+  const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
+  const [targetSwitchAccount, setTargetSwitchAccount] = useState<UserAccount | null>(null);
   const [showManageAccounts, setShowManageAccounts] = useState(false);
-  const activeAccount = accounts.find(a => a.id === activeAccountId) || accounts[0];
+  const activeAccount = accounts.find(a => a.id === activeAccountId) || null;
+
+  const handleRequestSwitchAccount = (id: string) => {
+    const target = accounts.find(a => a.id === id);
+    if (target) {
+      setTargetSwitchAccount(target);
+    }
+  };
+
+  const handleUpdateAccounts = (updatedAccounts: UserAccount[]) => {
+    setAccounts(updatedAccounts);
+    if (activeAccountId && !updatedAccounts.some(a => a.id === activeAccountId)) {
+      setActiveAccountId(null);
+    }
+  };
 
   // Batch State
   const [batchFiles, setBatchFiles] = useState<File[]>([]);
@@ -76,7 +93,7 @@ export default function App() {
   const handleAddActionLog = (logItem: Omit<ActionLogItem, 'id' | 'user'>) => {
     const newLog: ActionLogItem = {
       id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-      user: activeAccount.name,
+      user: activeAccount ? activeAccount.name : 'Unauthenticated System',
       ...logItem,
     };
     setActionHistory((prev) => [newLog, ...prev].slice(0, 20));
@@ -733,7 +750,7 @@ export default function App() {
         body: JSON.stringify({
           invoiceData: verifiedData,
           accessToken: tokenToUse,
-          extractedBy: activeAccount.name
+          extractedBy: activeAccount ? activeAccount.name : 'Unassigned'
         }),
       });
 
@@ -846,7 +863,7 @@ export default function App() {
           accessToken: googleAccessToken,
           targetInvoiceNumber: invNum,
           invoiceData: pendingData,
-          extractedBy: activeAccount.name
+          extractedBy: activeAccount ? activeAccount.name : 'Unassigned'
         }),
       });
 
@@ -876,6 +893,15 @@ export default function App() {
     }
   };
 
+  if (!activeAccountId) {
+    return (
+      <SignInGate
+        accounts={accounts}
+        onSignInSuccess={(id) => setActiveAccountId(id)}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-cream-100 text-charcoal-900 font-sans flex flex-col antialiased">
       {/* App Reload Sync Prompt Modal */}
@@ -896,14 +922,25 @@ export default function App() {
         onConnectSheetsClick={handleConnectGoogleSheets}
         accounts={accounts}
         activeAccountId={activeAccountId}
-        onSwitchAccount={setActiveAccountId}
+        onSwitchAccount={handleRequestSwitchAccount}
         onManageAccounts={() => setShowManageAccounts(true)}
+        onSignOut={() => setActiveAccountId(null)}
+      />
+
+      {/* Password Prompt Modal for Account Switcher */}
+      <AccountPasswordModal
+        targetAccount={targetSwitchAccount}
+        onConfirm={(acc) => {
+          setActiveAccountId(acc.id);
+          setTargetSwitchAccount(null);
+        }}
+        onCancel={() => setTargetSwitchAccount(null)}
       />
 
       {showManageAccounts && (
         <ManageAccountsModal
           accounts={accounts}
-          onUpdate={setAccounts}
+          onUpdate={handleUpdateAccounts}
           onClose={() => setShowManageAccounts(false)}
         />
       )}
@@ -1038,7 +1075,7 @@ export default function App() {
                   <div className="lg:col-span-7 h-full">
                     <ExtractionForm
                       initialData={extractedData}
-                      activeAccountName={activeAccount.name}
+                      activeAccountName={activeAccount ? activeAccount.name : undefined}
                       onFormChange={handleFormChange}
                       onAcceptAndSend={async (data) => {
                         await handleAcceptAndSend(data);

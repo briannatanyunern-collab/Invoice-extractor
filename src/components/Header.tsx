@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Database, ShieldCheck, FileSpreadsheet, FileEdit, Settings, ChevronDown } from 'lucide-react';
+import { FileText, Database, ShieldCheck, FileSpreadsheet, FileEdit, Settings, ChevronDown, LogOut } from 'lucide-react';
 import { UserAccount } from '../types';
 
 interface HeaderProps {
@@ -9,9 +9,10 @@ interface HeaderProps {
   googleSheetsConnected: boolean;
   onConnectSheetsClick?: () => void;
   accounts: UserAccount[];
-  activeAccountId: string;
+  activeAccountId: string | null;
   onSwitchAccount: (id: string) => void;
   onManageAccounts: () => void;
+  onSignOut: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,10 +24,11 @@ export const Header: React.FC<HeaderProps> = ({
   accounts,
   activeAccountId,
   onSwitchAccount,
-  onManageAccounts
+  onManageAccounts,
+  onSignOut
 }) => {
   const [showAccountDropdown, setShowAccountDropdown] = useState(false);
-  const activeAccount = accounts.find(a => a.id === activeAccountId) || accounts[0];
+  const activeAccount = accounts.find(a => a.id === activeAccountId) || null;
 
   return (
     <header className="bg-white border-b border-sand-200 shadow-2xs sticky top-0 z-30">
@@ -57,14 +59,20 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="relative">
               <button 
                 onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                className="flex items-center gap-2 bg-cream-100 px-3 py-1.5 rounded-lg border border-sand-200 hover:bg-sand-100 transition-colors"
+                className="flex items-center gap-2 bg-cream-100 px-3 py-1.5 rounded-lg border border-sand-200 hover:bg-sand-100 transition-colors cursor-pointer"
               >
-                <div className="w-7 h-7 rounded-full bg-sand-200 text-charcoal-900 font-bold text-xs flex items-center justify-center border border-sand-300">
-                  {activeAccount.initials}
+                <div className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center border ${
+                  activeAccount ? 'bg-sand-200 text-charcoal-900 border-sand-300' : 'bg-amber-100 text-amber-800 border-amber-300'
+                }`}>
+                  {activeAccount ? activeAccount.initials : '?'}
                 </div>
                 <div className="text-left">
-                  <p className="text-xs font-semibold text-charcoal-900 leading-tight">{activeAccount.name}</p>
-                  <p className="text-[10px] text-charcoal-500">{activeAccount.role}</p>
+                  <p className="text-xs font-semibold text-charcoal-900 leading-tight">
+                    {activeAccount ? activeAccount.name : 'Not signed in'}
+                  </p>
+                  <p className="text-[10px] text-charcoal-500">
+                    {activeAccount ? activeAccount.role : 'Select Account'}
+                  </p>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-charcoal-500 ml-1" />
               </button>
@@ -86,13 +94,21 @@ export const Header: React.FC<HeaderProps> = ({
                       <span className="truncate">{acc.name}</span>
                     </button>
                   ))}
-                  <div className="border-t border-sand-100 mt-1 pt-1">
+                  <div className="border-t border-sand-100 mt-1 pt-1 space-y-0.5">
                     <button 
                       onClick={() => { onManageAccounts(); setShowAccountDropdown(false); }}
-                      className="w-full text-left px-3 py-2 text-xs font-semibold text-charcoal-600 hover:bg-sand-50 flex items-center gap-1.5"
+                      className="w-full text-left px-3 py-2 text-xs font-semibold text-charcoal-600 hover:bg-sand-50 flex items-center gap-1.5 cursor-pointer"
                     >
                       <Settings className="w-3.5 h-3.5" /> Manage Accounts
                     </button>
+                    {activeAccount && (
+                      <button 
+                        onClick={() => { onSignOut(); setShowAccountDropdown(false); }}
+                        className="w-full text-left px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 flex items-center gap-1.5 cursor-pointer border-t border-sand-100"
+                      >
+                        <LogOut className="w-3.5 h-3.5 text-rose-600" /> Sign Out
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

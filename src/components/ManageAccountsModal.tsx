@@ -12,19 +12,22 @@ export const ManageAccountsModal: React.FC<ManageAccountsModalProps> = ({ accoun
   const [localAccounts, setLocalAccounts] = useState<UserAccount[]>(accounts);
   const [newName, setNewName] = useState('');
   const [newRole, setNewRole] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
   const handleAdd = () => {
-    if (!newName.trim()) return;
+    if (!newName.trim() || !newPassword.trim()) return;
     const initials = newName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
     const newAcc: UserAccount = {
       id: `acc-${Date.now()}`,
       name: newName.trim(),
       role: newRole.trim() || 'Team Member',
-      initials: initials || '?'
+      initials: initials || '?',
+      password: newPassword.trim(),
     };
     setLocalAccounts([...localAccounts, newAcc]);
     setNewName('');
     setNewRole('');
+    setNewPassword('');
   };
 
   const handleRemove = (id: string) => {
@@ -69,26 +72,35 @@ export const ManageAccountsModal: React.FC<ManageAccountsModalProps> = ({ accoun
 
           <div className="pt-4 border-t border-sand-200 space-y-3">
             <h3 className="text-sm font-bold text-charcoal-900">Add New Account</h3>
-            <div className="flex gap-2">
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="Name (e.g. Tan Ah Kow)" 
+                  value={newName} 
+                  onChange={e => setNewName(e.target.value)}
+                  className="flex-1 px-3 py-2 text-sm bg-white border border-sand-300 rounded-lg focus:border-sage-500"
+                />
+                <input 
+                  type="text" 
+                  placeholder="Role (e.g. Finance)" 
+                  value={newRole} 
+                  onChange={e => setNewRole(e.target.value)}
+                  className="flex-1 px-3 py-2 text-sm bg-white border border-sand-300 rounded-lg focus:border-sage-500"
+                />
+              </div>
               <input 
-                type="text" 
-                placeholder="Name" 
-                value={newName} 
-                onChange={e => setNewName(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm bg-white border border-sand-300 rounded-lg focus:border-sage-500"
-              />
-              <input 
-                type="text" 
-                placeholder="Role" 
-                value={newRole} 
-                onChange={e => setNewRole(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm bg-white border border-sand-300 rounded-lg focus:border-sage-500"
+                type="password" 
+                placeholder="Password (required)" 
+                value={newPassword} 
+                onChange={e => setNewPassword(e.target.value)}
+                className="w-full px-3 py-2 text-sm bg-white border border-sand-300 rounded-lg focus:border-sage-500"
               />
             </div>
             <button 
               onClick={handleAdd}
-              disabled={!newName.trim()}
-              className="w-full py-2 px-4 bg-sand-200 hover:bg-sand-300 text-charcoal-800 font-bold text-xs uppercase rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              disabled={!newName.trim() || !newPassword.trim()}
+              className="w-full py-2 px-4 bg-sand-200 hover:bg-sand-300 text-charcoal-800 font-bold text-xs uppercase rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
             >
               <Plus className="w-4 h-4" /> Add User
             </button>
