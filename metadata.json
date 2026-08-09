@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix Boon Huat Invoice Intake p2",
+  "description": "Accounts Payable invoice extraction and verification assistant for Boon Huat Hardware, powered by Gemini multimodal vision and Google Sheets integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
